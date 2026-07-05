@@ -1,6 +1,25 @@
 const NASA_KEY = "rasmw1660zIkhWPwbHxmsnLNqg8vMqd0nwdbMqDQ";
 const MAX_ITEMS = 12;
 
+/*
+=========================================================
+CUSTOM FRONT-END REQUIREMENT
+
+Student: Elliot Tawk
+
+Requirement:
+Design a loading spinner that appears during API calls.
+
+Implementation:
+The Spinner class controls the loading spinner on the Asteroids
+page. The spinner appears before the NASA NeoWs API request starts
+and disappears when the API request finishes, fails, or returns no
+matching asteroid results.
+
+This satisfies the custom UI requirement stated in the project brief.
+=========================================================
+*/
+
 class Spinner {
   constructor(spinnerId) {
     this.spinner = document.getElementById(spinnerId);
@@ -36,6 +55,7 @@ class AsteroidApp {
 
   setTodayDate() {
     if (!this.dateInput) return;
+
     const today = new Date().toISOString().split("T")[0];
     this.dateInput.value = today;
     this.dateInput.max = today;
@@ -51,6 +71,12 @@ class AsteroidApp {
         if (event.key === "Enter") {
           this.loadAsteroids();
         }
+      });
+    }
+
+    if (this.filterSelect) {
+      this.filterSelect.addEventListener("change", () => {
+        this.loadAsteroids();
       });
     }
   }
@@ -78,9 +104,10 @@ class AsteroidApp {
 
   async loadAsteroids() {
     this.clearPage();
+
     const selectedDate = this.getSelectedDate();
+
     this.spinner.show();
-    await this.delay(700);
 
     try {
       const apiUrl = this.buildApiUrl(selectedDate);
@@ -93,13 +120,14 @@ class AsteroidApp {
           errorData.msg ||
           errorData.message ||
           `NASA API failed with status ${response.status}`;
+
         throw new Error(apiMessage);
       }
 
       const data = await response.json();
+
       let asteroids = this.flattenAsteroids(data.near_earth_objects);
       asteroids = this.filterAsteroids(asteroids);
-      this.spinner.hide();
 
       if (asteroids.length === 0) {
         this.showEmptyState(selectedDate);
@@ -108,8 +136,9 @@ class AsteroidApp {
 
       this.displayAsteroids(asteroids.slice(0, MAX_ITEMS), asteroids.length);
     } catch (error) {
-      this.spinner.hide();
       this.showMessage(error.message, "danger");
+    } finally {
+      this.spinner.hide();
     }
   }
 
@@ -131,11 +160,15 @@ class AsteroidApp {
     const selectedFilter = this.getSelectedFilter();
 
     if (selectedFilter === "hazardous") {
-      return asteroids.filter((asteroid) => asteroid.is_potentially_hazardous_asteroid === true);
+      return asteroids.filter(
+        (asteroid) => asteroid.is_potentially_hazardous_asteroid === true
+      );
     }
 
     if (selectedFilter === "safe") {
-      return asteroids.filter((asteroid) => asteroid.is_potentially_hazardous_asteroid === false);
+      return asteroids.filter(
+        (asteroid) => asteroid.is_potentially_hazardous_asteroid === false
+      );
     }
 
     return asteroids;
@@ -144,12 +177,29 @@ class AsteroidApp {
   displayAsteroids(asteroids, totalCount) {
     this.grid.innerHTML = asteroids
       .map((asteroid) => {
-        const diameter = asteroid.estimated_diameter.kilometers.estimated_diameter_max.toFixed(2);
-        const approach = asteroid.close_approach_data.length > 0 ? asteroid.close_approach_data[0] : null;
-        const speed = approach ? Number(approach.relative_velocity.kilometers_per_hour).toFixed(0) : "Unknown";
-        const missDistance = approach ? Number(approach.miss_distance.kilometers).toFixed(0) : "Unknown";
-        const status = asteroid.is_potentially_hazardous_asteroid ? "Potentially Hazardous" : "Not Hazardous";
-        const badgeClass = asteroid.is_potentially_hazardous_asteroid ? "bg-danger" : "bg-success";
+        const diameter =
+          asteroid.estimated_diameter.kilometers.estimated_diameter_max.toFixed(2);
+
+        const approach =
+          asteroid.close_approach_data.length > 0
+            ? asteroid.close_approach_data[0]
+            : null;
+
+        const speed = approach
+          ? Number(approach.relative_velocity.kilometers_per_hour).toFixed(0)
+          : "Unknown";
+
+        const missDistance = approach
+          ? Number(approach.miss_distance.kilometers).toFixed(0)
+          : "Unknown";
+
+        const status = asteroid.is_potentially_hazardous_asteroid
+          ? "Potentially Hazardous"
+          : "Not Hazardous";
+
+        const badgeClass = asteroid.is_potentially_hazardous_asteroid
+          ? "bg-danger"
+          : "bg-success";
 
         return `
           <div class="col-md-4 col-lg-3 mb-4">
@@ -197,12 +247,6 @@ class AsteroidApp {
     if (this.grid) this.grid.innerHTML = "";
     if (this.messageBox) this.messageBox.innerHTML = "";
     if (this.resultCount) this.resultCount.innerHTML = "";
-  }
-
-  delay(milliseconds) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, milliseconds);
-    });
   }
 }
 
