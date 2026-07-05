@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Explorer | Near-Earth Asteroids</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark site-navbar">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">Space Explorer</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link active" href="mars.html">Asteroids</a></li>
+          <li class="nav-item"><a class="nav-link" href="about.html">Missions</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="page-section">
+      <div class="container">
+        <div class="text-center mb-5">
+          <p class="eyebrow">LIVE API PAGE</p>
+          <h1>Near-Earth Asteroids</h1>
+          <p class="lead-text">Choose a date and filter real NASA asteroid data.</p>
+        </div>
+
+        <div class="control-panel mx-auto mb-5">
+          <div class="mb-4">
+            <label for="dateInput" class="form-label">Date</label>
+            <input type="date" id="dateInput" class="form-control">
+          </div>
+
+          <div class="mb-4">
+            <label for="filterSelect" class="form-label">Asteroid Filter</label>
+            <select id="filterSelect" class="form-select">
+              <option value="all">All Asteroids</option>
+              <option value="hazardous">Potentially Hazardous</option>
+              <option value="safe">Not Hazardous</option>
+            </select>
+          </div>
+
+          <button id="loadButton" class="btn btn-primary w-100">Load Asteroids</button>
+        </div>
+
+        <div id="loadingSpinner" class="loading-box d-none" role="status" aria-live="polite">
+          <div class="custom-spinner" aria-hidden="true"></div>
+          <p>Loading NASA asteroid data...</p>
+        </div>
+
+        <div id="messageBox"></div>
+        <p id="resultCount" class="result-count text-center"></p>
+        <div id="asteroidGrid" class="row"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 Elliot Tawk — Space Explorer</p>
+      <p>NASA public API educational project</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
