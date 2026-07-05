@@ -11,12 +11,13 @@ Requirement:
 Design a loading spinner that appears during API calls.
 
 Implementation:
-The Spinner class controls the loading spinner on the Asteroids
-page. The spinner appears before the NASA NeoWs API request starts
-and disappears when the API request finishes, fails, or returns no
-matching asteroid results.
+The Spinner class controls the loading spinner displayed on the
+Asteroids page. The spinner appears before the NASA NeoWs API
+request begins and disappears when the request completes,
+fails, or returns no matching asteroid results.
 
-This satisfies the custom UI requirement stated in the project brief.
+This provides clear visual feedback while data is loading and
+satisfies the custom UI requirement.
 =========================================================
 */
 
@@ -44,7 +45,10 @@ class AsteroidApp {
     this.loadButton = document.getElementById("loadButton");
     this.messageBox = document.getElementById("messageBox");
     this.resultCount = document.getElementById("resultCount");
+
     this.spinner = new Spinner("loadingSpinner");
+
+    this.asteroids = [];
 
     if (!this.grid || !this.loadButton) return;
 
@@ -76,7 +80,7 @@ class AsteroidApp {
 
     if (this.filterSelect) {
       this.filterSelect.addEventListener("change", () => {
-        this.loadAsteroids();
+        this.displayFilteredAsteroids();
       });
     }
   }
@@ -110,33 +114,26 @@ class AsteroidApp {
     this.spinner.show();
 
     try {
-      const apiUrl = this.buildApiUrl(selectedDate);
-      const response = await fetch(apiUrl);
+      const response = await fetch(this.buildApiUrl(selectedDate));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const apiMessage =
-          errorData.error?.message ||
-          errorData.msg ||
-          errorData.message ||
-          `NASA API failed with status ${response.status}`;
 
-        throw new Error(apiMessage);
+        throw new Error(
+          errorData.error?.message ||
+            errorData.msg ||
+            errorData.message ||
+            `NASA API failed with status ${response.status}`
+        );
       }
 
       const data = await response.json();
 
-      let asteroids = this.flattenAsteroids(data.near_earth_objects);
-      asteroids = this.filterAsteroids(asteroids);
+      this.asteroids = this.flattenAsteroids(data.near_earth_objects);
 
-      if (asteroids.length === 0) {
-        this.showEmptyState(selectedDate);
-        return;
-      }
-
-      this.displayAsteroids(asteroids.slice(0, MAX_ITEMS), asteroids.length);
+      this.displayFilteredAsteroids();
     } catch (error) {
-      this.showMessage(error.message, "danger");
+      this.showMessage(error.message);
     } finally {
       this.spinner.hide();
     }
@@ -145,33 +142,38 @@ class AsteroidApp {
   flattenAsteroids(nearEarthObjects) {
     if (!nearEarthObjects) return [];
 
-    const allAsteroids = [];
-
-    Object.values(nearEarthObjects).forEach((dailyAsteroids) => {
-      dailyAsteroids.forEach((asteroid) => {
-        allAsteroids.push(asteroid);
-      });
-    });
-
-    return allAsteroids;
+    return Object.values(nearEarthObjects).flat();
   }
 
   filterAsteroids(asteroids) {
-    const selectedFilter = this.getSelectedFilter();
+    const filter = this.getSelectedFilter();
 
-    if (selectedFilter === "hazardous") {
+    if (filter === "hazardous") {
       return asteroids.filter(
-        (asteroid) => asteroid.is_potentially_hazardous_asteroid === true
+        asteroid => asteroid.is_potentially_hazardous_asteroid
       );
     }
 
-    if (selectedFilter === "safe") {
+    if (filter === "safe") {
       return asteroids.filter(
-        (asteroid) => asteroid.is_potentially_hazardous_asteroid === false
+        asteroid => !asteroid.is_potentially_hazardous_asteroid
       );
     }
 
     return asteroids;
+  }
+
+  displayFilteredAsteroids() {
+    this.clearPage();
+
+    const filtered = this.filterAsteroids(this.asteroids);
+
+    if (filtered.length === 0) {
+      this.showEmptyState(this.getSelectedDate());
+      return;
+    }
+
+    this.displayAsteroids(filtered.slice(0, MAX_ITEMS), filtered.length);
   }
 
   displayAsteroids(asteroids, totalCount) {
@@ -202,23 +204,24 @@ class AsteroidApp {
           : "bg-success";
 
         return `
-          <div class="col-md-4 col-lg-3 mb-4">
-            <div class="card space-card h-100">
-              <div class="card-body">
-                <span class="badge ${badgeClass} mb-3">${status}</span>
-                <h5 class="card-title">${asteroid.name}</h5>
-                <p class="card-text mb-1">Diameter: ${diameter} km</p>
-                <p class="card-text mb-1">Speed: ${speed} km/h</p>
-                <p class="card-text">Miss Distance: ${missDistance} km</p>
-              </div>
+        <div class="col-md-4 col-lg-3 mb-4">
+          <div class="card space-card h-100">
+            <div class="card-body">
+              <span class="badge ${badgeClass} mb-3">${status}</span>
+              <h5 class="card-title">${asteroid.name}</h5>
+              <p class="card-text mb-1"><strong>Diameter:</strong> ${diameter} km</p>
+              <p class="card-text mb-1"><strong>Speed:</strong> ${speed} km/h</p>
+              <p class="card-text"><strong>Miss Distance:</strong> ${missDistance} km</p>
             </div>
           </div>
+        </div>
         `;
       })
       .join("");
 
     if (this.resultCount) {
-      this.resultCount.innerHTML = `Showing ${asteroids.length} asteroid(s) from ${totalCount} matching result(s).`;
+      this.resultCount.textContent =
+        `Showing ${asteroids.length} asteroid(s) from ${totalCount} matching result(s).`;
     }
   }
 
@@ -227,7 +230,7 @@ class AsteroidApp {
       <div class="col-12">
         <div class="empty-box text-center">
           <h3>No Asteroids Found</h3>
-          <p>NASA returned no asteroid data for ${date} with your selected filter. Try another date or choose All Asteroids.</p>
+          <p>NASA returned no asteroid data for ${date} with the selected filter.</p>
         </div>
       </div>
     `;
